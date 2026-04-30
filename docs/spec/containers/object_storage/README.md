@@ -1,4 +1,4 @@
-# containers/rustfs/
+# containers/object_storage/
 
 S3 互換 Object Storage。論文 PDF などのバイナリデータを格納する。
 

@@ -1,11 +1,11 @@
-# containers/postgres/
+# containers/relational_database/
 
 PostgreSQL 17 のサービス定義と初期化スクリプト。
 
 ## ディレクトリ構成
 
 ```
-postgres/
+relational_database/
 └── init/
     └── 001_create_schemas.sql
 ```
@@ -33,7 +33,7 @@ postgres/
 
 ## 初期化
 
-`containers/postgres/init/` に SQL ファイルを配置し、Docker の `docker-entrypoint-initdb.d` マウントで自動実行する。
+`containers/relational_database/init/` に SQL ファイルを配置し、Docker の `docker-entrypoint-initdb.d` マウントで自動実行する。
 
 ```sql
 -- 001_create_schemas.sql

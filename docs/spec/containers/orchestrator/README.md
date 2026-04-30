@@ -1,11 +1,11 @@
-# containers/dagster/
+# containers/orchestrator/
 
 Dagster のカスタム Docker イメージとユーザーコード。
 
 ## ディレクトリ構成
 
 ```
-dagster/
+orchestrator/
 ├── Dockerfile
 ├── dagster.yaml          # インスタンス設定 (ストレージバックエンド等)
 ├── workspace.yaml        # code location 定義
