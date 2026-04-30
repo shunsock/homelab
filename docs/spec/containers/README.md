@@ -9,9 +9,9 @@ containers/
 ├── compose.yaml          # 全サービスのオーケストレーション (1ファイル)
 ├── .env                  # 認証情報 (git 管理外)
 ├── .env.example          # 認証情報テンプレート (git 管理対象)
-├── dagster/              # Dagster (webserver, daemon, code location)
-├── postgres/             # PostgreSQL
-└── rustfs/               # RustFS (S3 互換 Object Storage)
+├── orchestrator/         # Dagster (webserver, daemon, code location)
+├── relational_database/  # PostgreSQL
+└── object_storage/       # RustFS (S3 互換 Object Storage)
 ```
 
 ## compose.yaml の方針
