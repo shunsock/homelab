@@ -1,0 +1,37 @@
+name: homelab
+
+# Service skeletons. Each service's concrete configuration (image, ports,
+# env_file, volumes, depends_on, etc.) is added in the follow-up issues
+# listed below. The structure here exists so that follow-up PRs can fill
+# in details without bikeshedding layout.
+#
+#   postgres                : Issue #2 (relational database service)
+#   rustfs                  : Issue #3 (object storage service)
+#   dagster-webserver       : Issues #4, #5 (image build + workspace)
+#   dagster-daemon          : Issues #4, #5
+#   dagster-code-location   : Issues #4, #5
+
+services:
+  postgres:
+    # Spec: docs/spec/containers/relational_database/
+    restart: unless-stopped
+
+  rustfs:
+    # Spec: docs/spec/containers/object_storage/
+    restart: unless-stopped
+
+  dagster-webserver:
+    # Spec: docs/spec/containers/orchestrator/
+    restart: unless-stopped
+
+  dagster-daemon:
+    # Spec: docs/spec/containers/orchestrator/
+    restart: unless-stopped
+
+  dagster-code-location:
+    # Spec: docs/spec/containers/orchestrator/
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rustfs_data:
