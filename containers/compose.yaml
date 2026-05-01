@@ -14,10 +14,12 @@ name: homelab
 services:
   postgres:
     # Spec: docs/spec/containers/relational_database/
-    image: postgres:17
+    image: postgres:18
     restart: unless-stopped
     env_file:
       - .env
+    ports:
+      - "15432:5432"
     volumes:
       - ./relational_database/init:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
