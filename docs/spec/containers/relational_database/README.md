@@ -1,6 +1,6 @@
 # containers/relational_database/
 
-PostgreSQL 17 のサービス定義と初期化スクリプト。
+PostgreSQL 18 のサービス定義と初期化スクリプト。
 
 ## ディレクトリ構成
 
@@ -12,13 +12,18 @@ relational_database/
 
 ## イメージ
 
-`postgres:17` (公式イメージをそのまま使用)
+`postgres:18` (公式イメージをそのまま使用)
 
 ## ネットワーク
 
-ホストへのポート公開はしない。コンテナネットワーク内で Dagster からのみアクセスする。
+ホストには well-known port (5432) ではなく `15432` で公開する。コンテナネットワーク内では Dagster から `postgres:5432` でアクセスする。
 
-デバッグ時は `docker compose exec postgres psql` で接続する。将来的にデータを外部で参照したい場合は Dagster 経由で BigQuery 等にスナップショットを送る。
+ホストポートを well-known からずらす理由:
+
+- ボットによる無差別スキャンの一次フィルタになる (5432 を狙う典型的なペイロードが当たらない)
+- 同一ホストで PostgreSQL を別途動かすことになっても衝突しない
+
+デバッグ時はホストから `psql -h localhost -p 15432` または `docker compose exec postgres psql` で接続する。将来的にデータを外部で参照したい場合は Dagster 経由で BigQuery 等にスナップショットを送る。
 
 ## データベース設計
 
