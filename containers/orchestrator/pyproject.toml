@@ -1,0 +1,15 @@
+[project]
+name = "homelab-orchestrator"
+version = "0.1.0"
+description = "Dagster code location for the homelab data platform"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dagster>=1.13,<2",
+    "dagster-webserver>=1.13,<2",
+    "dagster-postgres>=0.29,<1",
+]
+
+[tool.uv]
+# app/ is exposed to the dagster code-server via PYTHONPATH=/app and loaded
+# with `-m app`, so we don't need to install this project as a wheel.
+package = false
