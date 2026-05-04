@@ -13,7 +13,7 @@ S3 互換 Object Storage。論文 PDF などのバイナリデータを格納す
 
 ## イメージ
 
-`rustfs/rustfs` (公式イメージ)
+`rustfs/rustfs:latest` (公式イメージ)
 
 ## ポート
 
@@ -22,18 +22,36 @@ S3 互換 Object Storage。論文 PDF などのバイナリデータを格納す
 | 19000 | 19000 | 9000 | S3 互換 API エンドポイント |
 | 19001 | 19001 | 9001 | Web コンソール |
 
+## 起動コマンド
+
+データディレクトリのパスのみを引数として渡す。MinIO の `server ... --console-address ...` 形式とは異なり、コンソールアドレスやアクセスキーなどはすべて環境変数で設定する。
+
+```yaml
+command: /data
+```
+
 ## 認証情報
 
 環境変数で注入する。`.env` に以下を設定する。
 
 | 環境変数 | 説明 |
 |---------|------|
-| RUSTFS_ROOT_USER | 管理者ユーザー名 |
-| RUSTFS_ROOT_PASSWORD | 管理者パスワード |
+| RUSTFS_ACCESS_KEY | S3 互換アクセスキー (管理者) |
+| RUSTFS_SECRET_KEY | S3 互換シークレットキー (管理者) |
+
+公式の既定値は `rustfsadmin` / `rustfsadmin` だが、本番値は必ず差し替える。
 
 ## 永続化
 
 named volume `rustfs_data` を `/data` にマウントする。
+
+## 既知の制約
+
+- コンテナは uid `10001` で動作する。named volume を使う場合 Docker が自動的に root 所有でボリュームを作成するため、書き込み権限エラーが発生する可能性がある。発生した場合は permission-fixer の helper service ([公式 simple compose](../../../reference/rustfs/README.md) 参照) を追加する。
+
+## 参考文献
+
+- [docs/reference/rustfs/README.md](../../../reference/rustfs/README.md)
 
 ## 用途 (将来)
 
