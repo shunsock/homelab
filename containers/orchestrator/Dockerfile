@@ -24,7 +24,10 @@ FROM python:3.12-slim-trixie AS runtime
 RUN groupadd --system --gid 1000 app-user \
  && useradd --system --uid 1000 --gid app-user --create-home app-user
 
+# /app is created by WORKDIR as root-owned by default. Chown it to app-user
+# so dagster (running as DAGSTER_HOME=/app) can write its telemetry/log dirs.
 WORKDIR /app
+RUN chown app-user:app-user /app
 
 COPY --from=builder --chown=app-user:app-user /app/.venv /app/.venv
 COPY --chown=app-user:app-user app ./app
