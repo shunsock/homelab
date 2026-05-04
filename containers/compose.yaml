@@ -1,16 +1,5 @@
 name: homelab
 
-# Service skeletons. Each service's concrete configuration (image, ports,
-# env_file, volumes, depends_on, etc.) is added in the follow-up issues
-# listed below. The structure here exists so that follow-up PRs can fill
-# in details without bikeshedding layout.
-#
-#   postgres                : Issue #2 (relational database service)
-#   rustfs                  : Issue #3 (object storage service)
-#   dagster-webserver       : Issues #4, #5 (image build + workspace)
-#   dagster-daemon          : Issues #4, #5
-#   dagster-code-location   : Issues #4, #5
-
 services:
   postgres:
     # Spec: docs/spec/containers/relational_database/
@@ -37,17 +26,48 @@ services:
       - rustfs_data:/data
     command: /data
 
+  dagster-code-location:
+    # Spec: docs/spec/containers/orchestrator/
+    # Hosts the user code as a gRPC server. The webserver and daemon load it
+    # via workspace.yaml. No DAGSTER_HOME / dagster.yaml needed here — only
+    # the webserver/daemon talk to the storage backend.
+    build: ./orchestrator
+    restart: unless-stopped
+    command: dagster code-server start -h 0.0.0.0 -p 4000 -m app
+
   dagster-webserver:
     # Spec: docs/spec/containers/orchestrator/
+    build: ./orchestrator
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DAGSTER_HOME: /app
+    command: dagster-webserver -h 0.0.0.0 -p 13000 -w workspace.yaml
+    ports:
+      - "13000:13000"
+    volumes:
+      - ./orchestrator/dagster.yaml:/app/dagster.yaml:ro
+      - ./orchestrator/workspace.yaml:/app/workspace.yaml:ro
+    depends_on:
+      - postgres
+      - dagster-code-location
 
   dagster-daemon:
     # Spec: docs/spec/containers/orchestrator/
+    build: ./orchestrator
     restart: unless-stopped
-
-  dagster-code-location:
-    # Spec: docs/spec/containers/orchestrator/
-    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DAGSTER_HOME: /app
+    command: dagster-daemon run -w workspace.yaml
+    volumes:
+      - ./orchestrator/dagster.yaml:/app/dagster.yaml:ro
+      - ./orchestrator/workspace.yaml:/app/workspace.yaml:ro
+    depends_on:
+      - postgres
+      - dagster-code-location
 
 volumes:
   postgres_data:
