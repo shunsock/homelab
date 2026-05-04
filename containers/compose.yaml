@@ -26,7 +26,16 @@ services:
 
   rustfs:
     # Spec: docs/spec/containers/object_storage/
+    image: rustfs/rustfs:latest
     restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "19000:9000"
+      - "19001:9001"
+    volumes:
+      - rustfs_data:/data
+    command: /data
 
   dagster-webserver:
     # Spec: docs/spec/containers/orchestrator/
