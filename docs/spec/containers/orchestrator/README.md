@@ -7,12 +7,18 @@ Dagster のカスタム Docker イメージとユーザーコード。
 ```
 orchestrator/
 ├── Dockerfile
-├── dagster.yaml          # インスタンス設定 (ストレージバックエンド等)
-├── workspace.yaml        # code location 定義
-├── pyproject.toml        # Python 依存定義
-├── uv.lock               # ロックファイル
-└── code/                 # ユーザーコード (asset, job, resource)
+├── dagster.yaml             # インスタンス設定 (ストレージバックエンド等)
+├── workspace.yaml           # code location 定義
+├── pyproject.toml           # Python 依存定義
+├── uv.lock                  # ロックファイル
+└── homelab_orchestrator/    # ユーザーコード (asset, job, resource)
 ```
+
+### ユーザーコードのディレクトリ名
+
+`homelab_orchestrator/` という名前を採用する。短い `code/` のような名前は **避ける**。
+
+理由: Python の `pdb` などの標準モジュールは内部で `import code` (stdlib の対話インタプリタ) を行う。`/app` を `WORKDIR` に持つコンテナでユーザーコードを `code/` という名前にすると、import 解決で `/app/code/` が stdlib の `code` を上書きしてしまい、Dagster の import チェーンが循環参照で破綻する (実装時に検証済み)。プロジェクト名と揃えた `homelab_orchestrator/` ならこの衝突を回避でき、`-m homelab_orchestrator` で起動コマンドにもそのまま利用できる。
 
 ## Docker イメージ
 
@@ -34,7 +40,7 @@ orchestrator/
 |---------|---------|-------|
 | dagster-webserver | `dagster-webserver -h 0.0.0.0 -p 13000` | 13000 (ホスト公開) |
 | dagster-daemon | `dagster-daemon run` | なし |
-| dagster-code-location | `dagster code-server start -h 0.0.0.0 -p 4000` | 4000 (コンテナ内のみ) |
+| dagster-code-location | `dagster code-server start -h 0.0.0.0 -p 4000 -m homelab_orchestrator` | 4000 (コンテナ内のみ) |
 
 ## dagster.yaml
 
@@ -67,7 +73,7 @@ load_from:
       location_name: "homelab"
 ```
 
-## ユーザーコード (code/)
+## ユーザーコード (homelab_orchestrator/)
 
 Dagster の asset, job, resource 定義を配置する。Milestone 1 ではスケルトンのみ作成し、Milestone 2 以降で arXiv 収集パイプラインや Claude Code バッチなどを追加する。
 
