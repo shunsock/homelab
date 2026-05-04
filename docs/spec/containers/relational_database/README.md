@@ -47,4 +47,6 @@ CREATE SCHEMA IF NOT EXISTS dagster;
 
 ## 永続化
 
-named volume `postgres_data` を `/var/lib/postgresql/data` にマウントする。
+named volume `postgres_data` を `/var/lib/postgresql` にマウントする。
+
+PostgreSQL 18 以降の公式イメージは、データをメジャーバージョン別のサブディレクトリ (例: `/var/lib/postgresql/18/docker/`) に格納する仕様に変わった。これは将来 `pg_upgrade --link` でマイナー/メジャーアップグレードする際にマウント境界をまたがず済むようにするための設計変更で、従来の `/var/lib/postgresql/data` 直下マウントは公式に拒否される。マウントは親ディレクトリ `/var/lib/postgresql` 側に当てる必要がある。
