@@ -11,14 +11,18 @@ orchestrator/
 ├── workspace.yaml           # code location 定義
 ├── pyproject.toml           # Python 依存定義
 ├── uv.lock                  # ロックファイル
-└── homelab_orchestrator/    # ユーザーコード (asset, job, resource)
+└── app/                     # ユーザーコード (asset, job, resource)
 ```
 
 ### ユーザーコードのディレクトリ名
 
-`homelab_orchestrator/` という名前を採用する。短い `code/` のような名前は **避ける**。
+`app/` という名前を採用する。短い `code/` のような名前は **避ける**。
 
-理由: Python の `pdb` などの標準モジュールは内部で `import code` (stdlib の対話インタプリタ) を行う。`/app` を `WORKDIR` に持つコンテナでユーザーコードを `code/` という名前にすると、import 解決で `/app/code/` が stdlib の `code` を上書きしてしまい、Dagster の import チェーンが循環参照で破綻する (実装時に検証済み)。プロジェクト名と揃えた `homelab_orchestrator/` ならこの衝突を回避でき、`-m homelab_orchestrator` で起動コマンドにもそのまま利用できる。
+理由: Python の `pdb` などの標準モジュールは内部で `import code` (stdlib の対話インタプリタ) を行う。`/app` を `WORKDIR` に持つコンテナでユーザーコードを `code/` という名前にすると、import 解決で `/app/code/` が stdlib の `code` を上書きしてしまい、Dagster の import チェーンが循環参照で破綻する (実装時に検証済み)。`app/` は stdlib および主要ライブラリと衝突せず、`-m app` で起動コマンドにもそのまま利用できる。
+
+### Linux ユーザー名との衝突回避
+
+ディレクトリ名 `app/` は WORKDIR `/app` と並ぶため、コンテナ内の Linux ユーザー名まで `app` にすると 1 語が 3 つの異なる対象 (WORKDIR / Linux ユーザー / Python モジュール) を指すことになりレビュー時の認知負荷が高い。Linux ユーザー名は **`app-user`** とし、Python モジュール名 `app` と分離する。
 
 ## Docker イメージ
 
@@ -29,7 +33,7 @@ orchestrator/
 ### ビルド方針
 
 - マルチステージビルドを採用する。ビルドステージで依存をインストールし、ランタイムステージにコピーする。
-- 非 root ユーザー (app) で実行する。
+- 非 root ユーザー (`app-user`) で実行する。
 - 依存管理は `pyproject.toml` + `uv.lock` で宣言的に行う。
 
 ### サービス構成
@@ -40,7 +44,7 @@ orchestrator/
 |---------|---------|-------|
 | dagster-webserver | `dagster-webserver -h 0.0.0.0 -p 13000` | 13000 (ホスト公開) |
 | dagster-daemon | `dagster-daemon run` | なし |
-| dagster-code-location | `dagster code-server start -h 0.0.0.0 -p 4000 -m homelab_orchestrator` | 4000 (コンテナ内のみ) |
+| dagster-code-location | `dagster code-server start -h 0.0.0.0 -p 4000 -m app` | 4000 (コンテナ内のみ) |
 
 ## dagster.yaml
 
@@ -73,7 +77,7 @@ load_from:
       location_name: "homelab"
 ```
 
-## ユーザーコード (homelab_orchestrator/)
+## ユーザーコード (app/)
 
 Dagster の asset, job, resource 定義を配置する。Milestone 1 ではスケルトンのみ作成し、Milestone 2 以降で arXiv 収集パイプラインや Claude Code バッチなどを追加する。
 
