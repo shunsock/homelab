@@ -1,7 +1,7 @@
 version: '3'
 
 # 各境界コンテキストにライフサイクル操作 (launch / shutdown / restart /
-# status) を割り当て、`homelab` を集約ルートとして全体操作を束ねる。
+# status) を割り当て、`containers` を集約ルートとして全体操作を束ねる。
 # 名前空間は DDD のサービス層メソッドに対応する。
 
 vars:
@@ -14,33 +14,33 @@ tasks:
       - task --list
     silent: true
 
-  homelab:launch:
-    desc: homelab 全体を起動する
+  containers:launch:
+    desc: 全コンテナを起動する
     deps:
       - relational_database:launch
       - object_storage:launch
       - orchestrator:launch
 
-  homelab:shutdown:
-    desc: homelab 全体を停止する
+  containers:shutdown:
+    desc: 全コンテナを停止する
     deps:
       - orchestrator:shutdown
       - object_storage:shutdown
       - relational_database:shutdown
 
-  homelab:restart:
-    desc: homelab 全体を再起動する
+  containers:restart:
+    desc: 全コンテナを再起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} restart
 
-  homelab:status:
-    desc: homelab 全体の稼働状況を確認する
+  containers:status:
+    desc: 全コンテナの稼働状況を確認する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps
 
   relational_database:launch:
     desc: リレーショナルデータベースを起動する
-    # homelab:launch と orchestrator:launch の双方から依存される
+    # containers:launch と orchestrator:launch の双方から依存される
     # ため、単一タスク実行内での重複起動を抑止する。
     run: once
     cmds:
