@@ -1,14 +1,8 @@
 version: '3'
 
-# Application service layer for the homelab.
-#
-# Bounded contexts map to Compose services:
-#   - relational_database  -> postgres
-#   - object_storage       -> rustfs
-#   - orchestrator         -> dagster-code-location / dagster-webserver / dagster-daemon
-#
-# The `homelab` namespace is the aggregate root that composes the
-# per-context services into whole-system lifecycle operations.
+# 各境界コンテキストにライフサイクル操作 (launch / shutdown / restart /
+# status) を割り当て、`homelab` を集約ルートとして全体操作を束ねる。
+# 名前空間は DDD のサービス層メソッドに対応する。
 
 vars:
   COMPOSE_FILE: containers/compose.yaml
@@ -20,9 +14,6 @@ tasks:
       - task --list
     silent: true
 
-  # ------------------------------------------------------------------
-  # Aggregate root: homelab
-  # ------------------------------------------------------------------
   homelab:launch:
     desc: homelab 全体を起動する
     deps:
@@ -47,14 +38,10 @@ tasks:
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps
 
-  # ------------------------------------------------------------------
-  # Bounded context: relational_database (PostgreSQL)
-  # ------------------------------------------------------------------
   relational_database:launch:
     desc: リレーショナルデータベースを起動する
-    # Multiple aggregates depend on this (homelab:launch and
-    # orchestrator:launch). `run: once` keeps it from being executed
-    # twice within a single task invocation.
+    # homelab:launch と orchestrator:launch の双方から依存される
+    # ため、単一タスク実行内での重複起動を抑止する。
     run: once
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} up -d postgres
@@ -74,9 +61,6 @@ tasks:
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps postgres
 
-  # ------------------------------------------------------------------
-  # Bounded context: object_storage (RustFS)
-  # ------------------------------------------------------------------
   object_storage:launch:
     desc: オブジェクトストレージを起動する
     cmds:
@@ -97,14 +81,11 @@ tasks:
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps rustfs
 
-  # ------------------------------------------------------------------
-  # Bounded context: orchestrator (Dagster)
-  # ------------------------------------------------------------------
-  # Dagster requires the relational database to be running, so launch
-  # depends on relational_database:launch. Compose's own depends_on
-  # handles internal ordering between code-location/webserver/daemon.
   orchestrator:launch:
     desc: オーケストレーターを起動する
+    # Dagster の永続化先である Postgres への依存はコンテキスト境界を
+    # またぐためタスク側で明示する。Compose の depends_on は同一
+    # コンテキスト内 (code-location/webserver/daemon) の順序のみ扱う。
     deps:
       - relational_database:launch
     cmds:
