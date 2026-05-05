@@ -15,7 +15,7 @@ vars:
 
 tasks:
   default:
-    desc: List available tasks
+    desc: 利用可能なタスクを一覧表示する
     cmds:
       - task --list
     silent: true
@@ -24,26 +24,26 @@ tasks:
   # Aggregate root: homelab
   # ------------------------------------------------------------------
   homelab:launch:
-    desc: Launch every bounded context
+    desc: homelab 全体を起動する
     deps:
       - relational_database:launch
       - object_storage:launch
       - orchestrator:launch
 
   homelab:shutdown:
-    desc: Shut down every bounded context
+    desc: homelab 全体を停止する
     deps:
       - orchestrator:shutdown
       - object_storage:shutdown
       - relational_database:shutdown
 
   homelab:restart:
-    desc: Restart every bounded context
+    desc: homelab 全体を再起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} restart
 
   homelab:status:
-    desc: Report the status of every bounded context
+    desc: homelab 全体の稼働状況を確認する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps
 
@@ -51,7 +51,7 @@ tasks:
   # Bounded context: relational_database (PostgreSQL)
   # ------------------------------------------------------------------
   relational_database:launch:
-    desc: Launch the relational database
+    desc: リレーショナルデータベースを起動する
     # Multiple aggregates depend on this (homelab:launch and
     # orchestrator:launch). `run: once` keeps it from being executed
     # twice within a single task invocation.
@@ -60,17 +60,17 @@ tasks:
       - docker compose -f {{.COMPOSE_FILE}} up -d postgres
 
   relational_database:shutdown:
-    desc: Shut down the relational database
+    desc: リレーショナルデータベースを停止する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} stop postgres
 
   relational_database:restart:
-    desc: Restart the relational database
+    desc: リレーショナルデータベースを再起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} restart postgres
 
   relational_database:status:
-    desc: Report the status of the relational database
+    desc: リレーショナルデータベースの稼働状況を確認する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps postgres
 
@@ -78,22 +78,22 @@ tasks:
   # Bounded context: object_storage (RustFS)
   # ------------------------------------------------------------------
   object_storage:launch:
-    desc: Launch the object storage
+    desc: オブジェクトストレージを起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} up -d rustfs
 
   object_storage:shutdown:
-    desc: Shut down the object storage
+    desc: オブジェクトストレージを停止する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} stop rustfs
 
   object_storage:restart:
-    desc: Restart the object storage
+    desc: オブジェクトストレージを再起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} restart rustfs
 
   object_storage:status:
-    desc: Report the status of the object storage
+    desc: オブジェクトストレージの稼働状況を確認する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps rustfs
 
@@ -104,23 +104,23 @@ tasks:
   # depends on relational_database:launch. Compose's own depends_on
   # handles internal ordering between code-location/webserver/daemon.
   orchestrator:launch:
-    desc: Launch the orchestrator
+    desc: オーケストレーターを起動する
     deps:
       - relational_database:launch
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} up -d dagster-code-location dagster-webserver dagster-daemon
 
   orchestrator:shutdown:
-    desc: Shut down the orchestrator
+    desc: オーケストレーターを停止する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} stop dagster-webserver dagster-daemon dagster-code-location
 
   orchestrator:restart:
-    desc: Restart the orchestrator
+    desc: オーケストレーターを再起動する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} restart dagster-code-location dagster-webserver dagster-daemon
 
   orchestrator:status:
-    desc: Report the status of the orchestrator
+    desc: オーケストレーターの稼働状況を確認する
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps dagster-code-location dagster-webserver dagster-daemon
