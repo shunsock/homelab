@@ -1,0 +1,126 @@
+version: '3'
+
+# Application service layer for the homelab.
+#
+# Bounded contexts map to Compose services:
+#   - relational_database  -> postgres
+#   - object_storage       -> rustfs
+#   - orchestrator         -> dagster-code-location / dagster-webserver / dagster-daemon
+#
+# The `homelab` namespace is the aggregate root that composes the
+# per-context services into whole-system lifecycle operations.
+
+vars:
+  COMPOSE_FILE: containers/compose.yaml
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # ------------------------------------------------------------------
+  # Aggregate root: homelab
+  # ------------------------------------------------------------------
+  homelab:launch:
+    desc: Launch every bounded context
+    deps:
+      - relational_database:launch
+      - object_storage:launch
+      - orchestrator:launch
+
+  homelab:shutdown:
+    desc: Shut down every bounded context
+    deps:
+      - orchestrator:shutdown
+      - object_storage:shutdown
+      - relational_database:shutdown
+
+  homelab:restart:
+    desc: Restart every bounded context
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart
+
+  homelab:status:
+    desc: Report the status of every bounded context
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps
+
+  # ------------------------------------------------------------------
+  # Bounded context: relational_database (PostgreSQL)
+  # ------------------------------------------------------------------
+  relational_database:launch:
+    desc: Launch the relational database
+    # Multiple aggregates depend on this (homelab:launch and
+    # orchestrator:launch). `run: once` keeps it from being executed
+    # twice within a single task invocation.
+    run: once
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d postgres
+
+  relational_database:shutdown:
+    desc: Shut down the relational database
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop postgres
+
+  relational_database:restart:
+    desc: Restart the relational database
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart postgres
+
+  relational_database:status:
+    desc: Report the status of the relational database
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps postgres
+
+  # ------------------------------------------------------------------
+  # Bounded context: object_storage (RustFS)
+  # ------------------------------------------------------------------
+  object_storage:launch:
+    desc: Launch the object storage
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d rustfs
+
+  object_storage:shutdown:
+    desc: Shut down the object storage
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop rustfs
+
+  object_storage:restart:
+    desc: Restart the object storage
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart rustfs
+
+  object_storage:status:
+    desc: Report the status of the object storage
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps rustfs
+
+  # ------------------------------------------------------------------
+  # Bounded context: orchestrator (Dagster)
+  # ------------------------------------------------------------------
+  # Dagster requires the relational database to be running, so launch
+  # depends on relational_database:launch. Compose's own depends_on
+  # handles internal ordering between code-location/webserver/daemon.
+  orchestrator:launch:
+    desc: Launch the orchestrator
+    deps:
+      - relational_database:launch
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d dagster-code-location dagster-webserver dagster-daemon
+
+  orchestrator:shutdown:
+    desc: Shut down the orchestrator
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop dagster-webserver dagster-daemon dagster-code-location
+
+  orchestrator:restart:
+    desc: Restart the orchestrator
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart dagster-code-location dagster-webserver dagster-daemon
+
+  orchestrator:status:
+    desc: Report the status of the orchestrator
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps dagster-code-location dagster-webserver dagster-daemon
