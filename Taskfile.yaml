@@ -1,0 +1,107 @@
+version: '3'
+
+# 各境界コンテキストにライフサイクル操作 (launch / shutdown / restart /
+# status) を割り当て、`containers` を集約ルートとして全体操作を束ねる。
+# 名前空間は DDD のサービス層メソッドに対応する。
+
+vars:
+  COMPOSE_FILE: containers/compose.yaml
+
+tasks:
+  default:
+    desc: 利用可能なタスクを一覧表示する
+    cmds:
+      - task --list
+    silent: true
+
+  containers:launch:
+    desc: 全コンテナを起動する
+    deps:
+      - relational_database:launch
+      - object_storage:launch
+      - orchestrator:launch
+
+  containers:shutdown:
+    desc: 全コンテナを停止する
+    deps:
+      - orchestrator:shutdown
+      - object_storage:shutdown
+      - relational_database:shutdown
+
+  containers:restart:
+    desc: 全コンテナを再起動する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart
+
+  containers:status:
+    desc: 全コンテナの稼働状況を確認する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps
+
+  relational_database:launch:
+    desc: リレーショナルデータベースを起動する
+    # containers:launch と orchestrator:launch の双方から依存される
+    # ため、単一タスク実行内での重複起動を抑止する。
+    run: once
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d postgres
+
+  relational_database:shutdown:
+    desc: リレーショナルデータベースを停止する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop postgres
+
+  relational_database:restart:
+    desc: リレーショナルデータベースを再起動する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart postgres
+
+  relational_database:status:
+    desc: リレーショナルデータベースの稼働状況を確認する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps postgres
+
+  object_storage:launch:
+    desc: オブジェクトストレージを起動する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d rustfs
+
+  object_storage:shutdown:
+    desc: オブジェクトストレージを停止する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop rustfs
+
+  object_storage:restart:
+    desc: オブジェクトストレージを再起動する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart rustfs
+
+  object_storage:status:
+    desc: オブジェクトストレージの稼働状況を確認する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps rustfs
+
+  orchestrator:launch:
+    desc: オーケストレーターを起動する
+    # Dagster の永続化先である Postgres への依存はコンテキスト境界を
+    # またぐためタスク側で明示する。Compose の depends_on は同一
+    # コンテキスト内 (code-location/webserver/daemon) の順序のみ扱う。
+    deps:
+      - relational_database:launch
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d dagster-code-location dagster-webserver dagster-daemon
+
+  orchestrator:shutdown:
+    desc: オーケストレーターを停止する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop dagster-webserver dagster-daemon dagster-code-location
+
+  orchestrator:restart:
+    desc: オーケストレーターを再起動する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} restart dagster-code-location dagster-webserver dagster-daemon
+
+  orchestrator:status:
+    desc: オーケストレーターの稼働状況を確認する
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps dagster-code-location dagster-webserver dagster-daemon
