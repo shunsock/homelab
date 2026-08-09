@@ -63,6 +63,10 @@
             ];
           }
 
+          ./module/host.nix
+          ./module/power.nix
+          ./module/software_update.nix
+
           {
             homebrew = {
               enable = true;
