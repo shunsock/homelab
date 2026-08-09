@@ -64,6 +64,7 @@
           }
 
           ./module/host.nix
+          ./module/keymap.nix
           ./module/power.nix
           ./module/remote_access.nix
           ./module/software_update.nix
@@ -81,8 +82,17 @@
                 # REASON: Homebrew 5.1 以降、破壊的な cleanup は明示承認を要求するため。
                 extraFlags = [ "--force-cleanup" ];
               };
+              brews = [
+                "colima"
+                "docker"
+                "docker-buildx"
+                "docker-compose"
+                "curl"
+              ];
               casks = [
+                "aquaskk"
                 "google-chrome"
+                "wezterm"
               ];
             };
           }
