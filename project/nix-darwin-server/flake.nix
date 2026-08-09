@@ -65,6 +65,7 @@
 
           ./module/host.nix
           ./module/power.nix
+          ./module/remote_access.nix
           ./module/software_update.nix
 
           {
